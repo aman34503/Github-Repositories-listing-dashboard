@@ -1,104 +1,67 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const username = 'aman34503';
-    const token = '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';
+const APIURL = "https://api.github.com/users/";
 
-    const userDetails = document.getElementById('userDetails');
-    const repoList = document.getElementById('repoList');
+//Create a new profile section with all details
+// Username
+//Image
+//Twitter username
+//location
+const createUserInfoHTML = (userData) => {
+    return `
+        <div>
+            <img src="${userData.avatar_url}">
+        </div>
+        <div>
+            <h2>${userData.name}</h2>
+            <p>@${userData.twitter_username}</p>
+            <p>${userData.bio}<br>Location: ${userData.location}</p>
+            <a href="https://twitter.com/${userData.twitter_username}" target="_blank">Twitter</a>
+        </div>
+    `;
+}
+//Create Repository 
+const createRepoHTML = (repo) => {
+    const topics = repo.topics ? `<p>Topics: ${repo.topics.join(', ')}</p>` : '';
+    return `
+        <div>
+            <h4>${repo.name}</h4>
+            <p>${repo.description}</p>
+            ${topics}
+            <a href="${repo.html_url}" target="_blank">View Repository</a>
+        </div>
+    `;
+}
 
-    const headers = {
-        Authorization: `Bearer ${token}`,
-    };
+//Get Data of Specific User
+const getUserData = async () => {
+    const usernameInput = document.getElementById("usernameInput");
+    const username = usernameInput.value;
 
-    const apiUrl = (endpoint) => `https://api.github.com${endpoint}`;
+    if (username.trim() === "") {
+        alert("Please enter a GitHub username.");
+        return;
+    }
 
-    const fetchData = async (url) => {
-        const response = await fetch(url, { headers });
-        if (!response.ok) {
-            throw new Error(`Error fetching data: ${response.statusText}`);
-        }
-        return response.json();
-    };
+    try {
+        const response = await fetch(APIURL + username);
+        const userData = await response.json();
 
-    const fetchUserDetails = async () => {
-        const userApiUrl = apiUrl(`/users/${username}`);
-        return fetchData(userApiUrl);
-    };
+        document.getElementById("user-info-container").innerHTML = createUserInfoHTML(userData);
 
-    const fetchUserRepositories = async () => {
-        const repoApiUrl = apiUrl(`/users/${username}/repos`);
-        return fetchData(repoApiUrl);
-    };
+        getRepositories(username);
+    } catch (error) {
+        console.error("Error fetching user data:", error);
+        alert("Error fetching user data. Please check the username and try again.");
+    }
+}
 
-    const renderUserDetails = (user) => {
-        const userItem = document.createElement('li');
-        userItem.className = 'detailItem';
+const getRepositories = async (username) => {
+    try {
+        const response = await fetch(`${APIURL}${username}/repos`);
+        const reposData = await response.json();
 
-        const profilePhoto = document.createElement('img');
-        profilePhoto.src = user.avatar_url;
-        profilePhoto.alt = 'Profile Photo';
-        profilePhoto.width = 50;
-        userItem.appendChild(profilePhoto);
-
-        const nameElement = document.createElement('span');
-        nameElement.textContent = user.name || username;
-        userItem.appendChild(nameElement);
-
-        if (user.bio) {
-            const bioElement = document.createElement('p');
-            bioElement.textContent = user.bio;
-            userItem.appendChild(bioElement);
-        }
-
-        if (user.twitter_username) {
-            const twitterLink = document.createElement('a');
-            twitterLink.href = `https://twitter.com/${user.twitter_username}`;
-            twitterLink.textContent = `Twitter: @${user.twitter_username}`;
-            userItem.appendChild(twitterLink);
-        }
-
-        if (user.location) {
-            const locationElement = document.createElement('p');
-            locationElement.textContent = `Location: ${user.location}`;
-            userItem.appendChild(locationElement);
-        }
-
-        const githubLink = document.createElement('a');
-        githubLink.href = user.html_url;
-        githubLink.textContent = `GitHub: ${user.login}`;
-        userItem.appendChild(githubLink);
-
-        userDetails.appendChild(userItem);
-    };
-
-    const renderUserRepositories = (repos) => {
-        repos.forEach(repo => {
-            const repoItem = document.createElement('li');
-            repoItem.className = 'repoItem';
-
-            const repoLink = document.createElement('a');
-            repoLink.href = repo.html_url;
-            repoLink.textContent = repo.name;
-
-            repoItem.appendChild(repoLink);
-            repoList.appendChild(repoItem);
-        });
-    };
-
-    const handleError = (error, message) => {
-        console.error(message, error);
-    };
-
-    const init = async () => {
-        try {
-            const user = await fetchUserDetails();
-            renderUserDetails(user);
-
-            const repos = await fetchUserRepositories();
-            renderUserRepositories(repos);
-        } catch (error) {
-            handleError(error, 'Error during initialization:');
-        }
-    };
-
-    init();
-});
+        document.getElementById("repo-list-container").innerHTML = reposData.map(createRepoHTML).join('');
+    } catch (error) {
+        console.error("Error fetching repositories data:", error);
+        alert("Error fetching repositories data. Please try again.");
+    }
+}
