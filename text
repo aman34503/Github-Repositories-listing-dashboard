@@ -1,0 +1,86 @@
+const createPaginationNumbers = (totalPages, currentPage) => {
+  const paginationContainer = document.getElementById("pagination-numbers");
+  paginationContainer.innerHTML = "";
+
+  for (let i = 1; i <= totalPages; i++) {
+    const paginationNumber = document.createElement("div");
+    paginationNumber.className = "pagination-number";
+    paginationNumber.textContent = i;
+    paginationNumber.addEventListener("click", () => handlePagination(i));
+
+    if (i === currentPage) {
+      paginationNumber.classList.add("current-page");
+    }
+
+    paginationContainer.appendChild(paginationNumber);
+  }
+};
+
+const createButton = (text, clickHandler) => {
+  const button = document.createElement("button");
+  button.textContent = text;
+  button.addEventListener("click", clickHandler);
+  return button;
+};
+
+const handleNextPage = async () => {
+  const currentPage = parseInt(document.querySelector(".current-page").textContent);
+  handlePagination(currentPage + 1);
+};
+
+const handlePreviousPage = async () => {
+  const currentPage = parseInt(document.querySelector(".current-page").textContent);
+  handlePagination(currentPage - 1);
+};
+
+const updatePaginationButtons = (currentPage, totalPages) => {
+  const paginationContainer = document.getElementById("pagination-numbers");
+  const nextButton = createButton("Next", handleNextPage);
+  const previousButton = createButton("Previous", handlePreviousPage);
+
+  previousButton.disabled = currentPage === 1;
+  nextButton.disabled = currentPage === totalPages;
+
+  paginationContainer.appendChild(previousButton);
+
+  if (totalPages > 1) {
+    paginationContainer.appendChild(nextButton);
+  }
+};
+
+const handlePagination = async (pageNumber) => {
+  const usernameInput = document.getElementById("usernameInput");
+  const username = usernameInput.value.trim();
+
+  if (!username) {
+    alert("Please enter a GitHub username.");
+    return;
+  }
+
+  try {
+    const userData = await fetchData(`${API_BASE_URL}/users/${username}`);
+    createUserInfoHTML(userData);
+    getRepositories(username, pageNumber);
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+const getRepositories = async (username, page = 1) => {
+    try {
+      const userData = await fetchData(`${API_BASE_URL}/users/${username}`);
+      createUserInfoHTML(userData);
+  
+      const totalReposCount = userData.public_repos;
+      const reposData = await fetchData(
+        `${API_BASE_URL}/users/${username}/repos?page=${page}&per_page=${perPage}`
+      );
+      createRepoHTML(reposData);
+  
+      const totalPages = Math.ceil(totalReposCount / perPage);
+      createPaginationNumbers(totalPages, page);
+      updatePaginationButtons(page, totalPages);
+    } catch (error) {
+      alert(error.message);
+    }
+  };

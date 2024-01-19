@@ -36,8 +36,8 @@ const fetchData = async (url) => {
 
 const createUserInfoHTML = (userData) => {
   document.getElementById("img-container").src = userData.avatar_url;
-  document.getElementById("user-githublink").textContent = userData.html_url || "Not available";
-  console.log(userData);
+  document.getElementById("user-githublink").textContent =
+    userData.html_url || "Not available";
   document.getElementById("user-name").textContent =
     userData.name || "No name available";
   document.getElementById("user-bio").textContent =
@@ -112,7 +112,7 @@ const createButton = (text, clickHandler, classList) => {
   const button = document.createElement("button");
   button.textContent = text;
   button.addEventListener("click", clickHandler);
-  button.classList.add(text)
+  button.classList.add(text);
   return button;
 };
 
@@ -146,7 +146,7 @@ const handlePagination = async (pageNumber) => {
   const username = usernameInput.value.trim();
 
   if (!username) {
-    alert("Please enter a GitHub username.");
+    alert("Please enter a GitHub username. try aman34503");
     return;
   }
 
@@ -158,6 +158,52 @@ const handlePagination = async (pageNumber) => {
     alert(error.message);
   }
 };
+
+const filterRepositories = (reposData, searchFilter) => {
+  if (!searchFilter) {
+    return reposData; // If no search filter, return all repositories
+  }
+
+  return reposData.filter((repo) =>
+    repo.name.toLowerCase().includes(searchFilter)
+  );
+};
+
+// Function to handle search and update repositories
+const searchRepositories = async () => {
+  const usernameInput = document.getElementById("usernameInput");
+  const username = usernameInput.value.trim();
+
+  const searchInput = document.getElementById("repoSearchInput");
+  const searchFilter = searchInput.value.trim().toLowerCase();
+
+  try {
+    const userData = await fetchData(`${API_BASE_URL}/users/${username}`);
+    createUserInfoHTML(userData);
+
+    const totalReposCount = userData.public_repos;
+
+    const reposData = await fetchData(
+      `${API_BASE_URL}/users/${username}/repos?per_page=${perPage}`
+    );
+
+    // Filter repositories based on the search filter
+    const filteredRepos = filterRepositories(reposData, searchFilter);
+
+    createRepoHTML(filteredRepos);
+
+    const totalPages = Math.ceil(filteredRepos.length / perPage);
+
+    // Clear and recreate pagination numbers based on the filtered repositories
+    createPaginationNumbers(totalPages, 1);
+    updatePaginationButtons(1, totalPages);
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+// Event listener to handle search input changes
+document.getElementById("repoSearchInput").addEventListener("input", searchRepositories);
 
 const getUserData = async () => {
   const usernameInput = document.getElementById("usernameInput");
