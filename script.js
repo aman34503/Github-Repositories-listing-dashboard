@@ -1,8 +1,19 @@
 const API_BASE_URL = "https://api.github.com";
+const perPage = 6;
 
 const toggleTheme = () => {
-  const body = document.body;
-  body.classList.toggle("dark-theme");
+  document.body.classList.toggle("dark-theme");
+};
+
+const paginationContainer = document.getElementById("pagination-numbers");
+const loaderModal = document.getElementById("loaderModal");
+
+const showLoader = () => {
+  loaderModal.classList.add("show");
+};
+
+const hideLoader = () => {
+  loaderModal.classList.remove("show");
 };
 
 const themeToggleBtn = document.getElementById("theme-toggle");
@@ -10,27 +21,31 @@ themeToggleBtn.addEventListener("click", toggleTheme);
 
 const fetchData = async (url) => {
   try {
+    showLoader();
     const response = await fetch(url);
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Error fetching data:", error);
     throw new Error("Error fetching data. Please try again.");
+  } finally {
+    setTimeout(() => {
+      hideLoader();
+    }, 10000);
   }
 };
 
 const createUserInfoHTML = (userData) => {
-  const imgContainer = document.getElementById("img-container");
-  imgContainer.src = userData.avatar_url;
+  document.getElementById("img-container").src = userData.avatar_url;
+  document.getElementById("user-githublink").textContent = userData.html_url || "Not available";
+  console.log(userData);
+  document.getElementById("user-name").textContent =
+    userData.name || "No name available";
+  document.getElementById("user-bio").textContent =
+    userData.bio || "No bio available";
+  document.getElementById("user-location").textContent =
+    userData.location || "Not specified";
 
-  const userName = document.getElementById("user-name");
-  const userBio = document.getElementById("user-bio");
-  const userLocation = document.getElementById("user-location");
   const userTwitter = document.getElementById("user-twitter");
-
-  userName.textContent = userData.name || "No name available";
-  userBio.textContent = userData.bio || "No bio available";
-  userLocation.textContent = userData.location || "Not specified";
   userTwitter.innerHTML = userData.twitter_username
     ? `Twitter: <a href="https://twitter.com/${userData.twitter_username}" target="_blank">@${userData.twitter_username}</a>`
     : "Twitter: Not specified";
@@ -42,10 +57,10 @@ const createRepoHTML = (reposData) => {
 
   reposData.forEach((repo) => {
     const repoContainer = document.createElement("div");
-    repoContainer.classList.add("repo-card");
+    repoContainer.className = "repo-card";
 
     const repoTitle = document.createElement("h2");
-    repoTitle.classList.add("repo-title");
+    repoTitle.className = "repo-title";
     const repoTitleLink = document.createElement("a");
     repoTitleLink.href = repo.html_url;
     repoTitleLink.target = "_blank";
@@ -56,12 +71,12 @@ const createRepoHTML = (reposData) => {
     description.textContent = repo.description || "No description available";
 
     const topicsListContainer = document.createElement("div");
-    topicsListContainer.classList.add("repo-topics");
+    topicsListContainer.className = "repo-topics";
 
     if (repo.topics && repo.topics.length > 0) {
       repo.topics.forEach((topic) => {
         const topicElement = document.createElement("div");
-        topicElement.classList.add("repo-topic");
+        topicElement.className = "repo-topic";
         topicElement.textContent = topic;
         topicsListContainer.appendChild(topicElement);
       });
@@ -77,25 +92,71 @@ const createRepoHTML = (reposData) => {
 
 const createPaginationNumbers = (totalPages, currentPage) => {
   const paginationContainer = document.getElementById("pagination-numbers");
-  paginationContainer.innerHTML = ""; // Clear previous pagination
-
-  const paginationFragment = document.createDocumentFragment();
+  paginationContainer.innerHTML = "";
 
   for (let i = 1; i <= totalPages; i++) {
     const paginationNumber = document.createElement("div");
-    paginationNumber.classList.add("pagination-number");
+    paginationNumber.className = "pagination-number";
     paginationNumber.textContent = i;
+    paginationNumber.addEventListener("click", () => handlePagination(i));
 
     if (i === currentPage) {
       paginationNumber.classList.add("current-page");
     }
 
-    paginationNumber.addEventListener("click", () => loadPage(i));
+    paginationContainer.appendChild(paginationNumber);
+  }
+};
 
-    paginationFragment.appendChild(paginationNumber);
+const createButton = (text, clickHandler, classList) => {
+  const button = document.createElement("button");
+  button.textContent = text;
+  button.addEventListener("click", clickHandler);
+  button.classList.add(text)
+  return button;
+};
+
+const handleNextPage = async () => {
+  const currentPage = parseInt(document.querySelector(".current-page").textContent);
+  handlePagination(currentPage + 1);
+};
+
+const handlePreviousPage = async () => {
+  const currentPage = parseInt(document.querySelector(".current-page").textContent);
+  handlePagination(currentPage - 1);
+};
+
+const updatePaginationButtons = (currentPage, totalPages) => {
+  const paginationContainer = document.getElementById("pagination-numbers");
+  const nextButton = createButton("Next", handleNextPage);
+  const previousButton = createButton("Previous", handlePreviousPage);
+
+  previousButton.disabled = currentPage === 1;
+  nextButton.disabled = currentPage === totalPages;
+
+  paginationContainer.appendChild(previousButton);
+
+  if (totalPages > 1) {
+    paginationContainer.appendChild(nextButton);
+  }
+};
+
+const handlePagination = async (pageNumber) => {
+  const usernameInput = document.getElementById("usernameInput");
+  const username = usernameInput.value.trim();
+
+  if (!username) {
+    alert("Please enter a GitHub username.");
+    return;
   }
 
-  paginationContainer.appendChild(paginationFragment);
+  try {
+    const userData = await fetchData(`${API_BASE_URL}/users/${username}`);
+    createUserInfoHTML(userData);
+    getRepositories(username, pageNumber);
+  } catch (error) {
+    alert(error.message);
+  }
 };
 
 const getUserData = async () => {
@@ -118,38 +179,24 @@ const getUserData = async () => {
 
 const getRepositories = async (username, page = 1) => {
   try {
-    const perPage = 6; // Number of repositories per page
-    const reposData = await fetchData(`${API_BASE_URL}/users/${username}/repos?page=${page}&per_page=${perPage}`);
-    createRepoHTML(reposData);
-
-    // Get total repositories count to calculate total pages for pagination
-    const totalReposCount = await fetchData(`${API_BASE_URL}/users/${username}`);
-    const totalPages = Math.ceil(totalReposCount.public_repos / perPage);
-
-    createPaginationNumbers(totalPages, page);
-  } catch (error) {
-    alert(error.message);
-  }
-};
-
-// Add pagination functionality
-const loadPage = async (pageNumber) => {
-  const usernameInput = document.getElementById("usernameInput");
-  const username = usernameInput.value;
-
-  if (username.trim() === "") {
-    alert("Please enter a GitHub username.");
-    return;
-  }
-
-  try {
+    // Get user details, including the total number of public repositories
     const userData = await fetchData(`${API_BASE_URL}/users/${username}`);
     createUserInfoHTML(userData);
-    getRepositories(username, pageNumber);
+
+    const totalReposCount = userData.public_repos;
+
+    const reposData = await fetchData(
+      `${API_BASE_URL}/users/${username}/repos?page=${page}&per_page=${perPage}`
+    );
+    createRepoHTML(reposData);
+
+    const totalPages = Math.ceil(totalReposCount / perPage);
+
+    createPaginationNumbers(totalPages, page);
+    updatePaginationButtons(page, totalPages);
   } catch (error) {
     alert(error.message);
   }
 };
-
 // Initial load with page 1
-loadPage(1);
+handlePagination(1);
