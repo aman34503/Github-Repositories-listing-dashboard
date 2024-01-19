@@ -1,3 +1,27 @@
+*{
+  font-family: sans-serif;
+}
+
+.pagination {
+  display: flex;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.pagination-number {
+  cursor: pointer;
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  user-select: none;
+}
+
+.current-page {
+  background-color: #007bff;
+  color: #fff;
+  border: 1px solid #007bff;
+}
+
 .user-info {
   display: flex;
   align-items: center;
@@ -14,6 +38,10 @@
   max-width: 510px;
 }
 
+.user-info-details {
+  flex: 1;
+}
+
 .repo-section {
   margin-top: 60px;
 }
@@ -24,25 +52,77 @@
   margin-bottom: 10px;
 }
 
-.repo-container {
-  flex: 0 0 calc(50% - 20px);
-  margin-right: 20px;
-  margin-bottom: 20px;
-  height: 100%; 
-  box-shadow: 0 4px 8px rgba(1, 1, 0, 0.1); 
+#repo-list-container {
+  margin-top: 33px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; 
 }
 
 .repo-card {
-box-shadow: 0 4px 8px rgba(41, 39, 39, 0.171);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 10px;
-  border: 1px solid #979797; 
+  border: 1px solid #000000;
   border-radius: 4px;
-  height: 12em;
+  flex: 0 0 calc(50% - 20px);
+}
+
+.dark-theme {
+  color: white;
+  background-color: black;
 }
 
 .repo-topics {
   display: flex;
   flex-wrap: wrap;
+}
+
+.dark-theme {
+  --primary: #2c3e50;
+  --text: #ecf0f1;
+  --primaryT: #34495e;
+  --textT: #bdc3c7;
+  background-color: #1f2c38;
+}
+
+/* Navbar styles */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary);
+  color: var(--text);
+  padding: 10px;
+}
+
+/* Toggle button styles */
+#theme-toggle {
+  background-color: var(--primaryT);
+  color: var(--textT);
+  padding: 8px 16px;
+  border: 1 px solid black !important;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#theme-toggle:hover {
+  background-color: var(--primary);
+  color: var(--text);
+}
+
+/* Add styles for dark theme */
+.dark-theme {
+  color: white;
+  background-color: black;
+}
+#pagination-container {
+  display: flex;
+  justify-content: center;
+}
+
+#pagination-container button {
+  cursor: pointer;
 }
 
 .repo-topic {
@@ -51,25 +131,17 @@ box-shadow: 0 4px 8px rgba(41, 39, 39, 0.171);
   padding: 5px 10px;
   margin: 5px;
   border-radius: 4px;
+  cursor: pointer;
 }
 
-@media (max-width: 576px) {
-  .repo-container {
-    flex: 0 0 calc(50% - 20px);
-    margin-right: 20px;
-  margin-bottom: 20px;
+@media (max-width: 768px) {
+  .user-info {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .repo-container:nth-child(odd) {
-    margin-right: 0;
+  .user-info img {
+    margin-bottom: 15px;
+    margin-left: 108px;
   }
-}
-
-/* Add styles for pagination container */
-.pagination-container {
-  margin-top: 20px;
-}
-
-.pagination-container button {
-  margin-right: 5px;
 }

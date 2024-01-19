@@ -1,5 +1,13 @@
 const API_BASE_URL = "https://api.github.com";
 
+const toggleTheme = () => {
+  const body = document.body;
+  body.classList.toggle("dark-theme");
+};
+
+const themeToggleBtn = document.getElementById("theme-toggle");
+themeToggleBtn.addEventListener("click", toggleTheme);
+
 const fetchData = async (url) => {
   try {
     const response = await fetch(url);
@@ -22,7 +30,7 @@ const createUserInfoHTML = (userData) => {
 
   userName.textContent = userData.name || "No name available";
   userBio.textContent = userData.bio || "No bio available";
-  userLocation.textContent = `Location: ${userData.location || "Not specified"}`;
+  userLocation.textContent = userData.location || "Not specified";
   userTwitter.innerHTML = userData.twitter_username
     ? `Twitter: <a href="https://twitter.com/${userData.twitter_username}" target="_blank">@${userData.twitter_username}</a>`
     : "Twitter: Not specified";
@@ -30,13 +38,11 @@ const createUserInfoHTML = (userData) => {
 
 const createRepoHTML = (reposData) => {
   const repoListContainer = document.getElementById("repo-list-container");
+  repoListContainer.innerHTML = ""; // Clear previous repo data
 
   reposData.forEach((repo) => {
     const repoContainer = document.createElement("div");
-    repoContainer.classList.add("repo-container");
-
-    const repoCard = document.createElement("div");
-    repoCard.classList.add("repo-card");
+    repoContainer.classList.add("repo-card");
 
     const repoTitle = document.createElement("h2");
     repoTitle.classList.add("repo-title");
@@ -61,13 +67,35 @@ const createRepoHTML = (reposData) => {
       });
     }
 
-    repoCard.appendChild(repoTitle);
-    repoCard.appendChild(description);
-    repoCard.appendChild(topicsListContainer);
+    repoContainer.appendChild(repoTitle);
+    repoContainer.appendChild(description);
+    repoContainer.appendChild(topicsListContainer);
 
-    repoContainer.appendChild(repoCard);
     repoListContainer.appendChild(repoContainer);
   });
+};
+
+const createPaginationNumbers = (totalPages, currentPage) => {
+  const paginationContainer = document.getElementById("pagination-numbers");
+  paginationContainer.innerHTML = ""; // Clear previous pagination
+
+  const paginationFragment = document.createDocumentFragment();
+
+  for (let i = 1; i <= totalPages; i++) {
+    const paginationNumber = document.createElement("div");
+    paginationNumber.classList.add("pagination-number");
+    paginationNumber.textContent = i;
+
+    if (i === currentPage) {
+      paginationNumber.classList.add("current-page");
+    }
+
+    paginationNumber.addEventListener("click", () => loadPage(i));
+
+    paginationFragment.appendChild(paginationNumber);
+  }
+
+  paginationContainer.appendChild(paginationFragment);
 };
 
 const getUserData = async () => {
@@ -92,16 +120,20 @@ const getRepositories = async (username, page = 1) => {
   try {
     const perPage = 6; // Number of repositories per page
     const reposData = await fetchData(`${API_BASE_URL}/users/${username}/repos?page=${page}&per_page=${perPage}`);
-    console.log(reposData);
-
     createRepoHTML(reposData);
+
+    // Get total repositories count to calculate total pages for pagination
+    const totalReposCount = await fetchData(`${API_BASE_URL}/users/${username}`);
+    const totalPages = Math.ceil(totalReposCount.public_repos / perPage);
+
+    createPaginationNumbers(totalPages, page);
   } catch (error) {
     alert(error.message);
   }
 };
 
 // Add pagination functionality
-const loadPage = (page) => {
+const loadPage = async (pageNumber) => {
   const usernameInput = document.getElementById("usernameInput");
   const username = usernameInput.value;
 
@@ -110,7 +142,13 @@ const loadPage = (page) => {
     return;
   }
 
-  getRepositories(username, page);
+  try {
+    const userData = await fetchData(`${API_BASE_URL}/users/${username}`);
+    createUserInfoHTML(userData);
+    getRepositories(username, pageNumber);
+  } catch (error) {
+    alert(error.message);
+  }
 };
 
 // Initial load with page 1
