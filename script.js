@@ -1,47 +1,75 @@
-const APIURL = "https://api.github.com/users/";
+const API_BASE_URL = "https://api.github.com";
 
-// Create a new profile section with all details
-// Username
-// Image
-// Twitter username
-// Location
+const fetchData = async (url) => {
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    throw new Error("Error fetching data. Please try again.");
+  }
+};
+
 const createUserInfoHTML = (userData) => {
-  return `
-    <div class="user-info row">
-    <div class="col-md-4 user-img-container">
-        <img src="${userData.avatar_url}" class="img-fluid rounded-circle">
-    </div>
-    <div class="col-md-8">
-        <h2 class="h4">${userData.name}</h2>
-        <p class="mb-0">${userData.bio}</p>
-        <p class="text-muted">
-        <i class="fa-solid fa-location-dot"></i> Location: ${userData.location}
-</p>
-        <p>Twitter : <a href="https://twitter.com/${userData.twitter_username}" target="_blank">@${userData.twitter_username}</a></p>
-    </div>
-</div>
-    `;
+  const imgContainer = document.getElementById("img-container");
+  imgContainer.src = userData.avatar_url;
+
+  const userName = document.getElementById("user-name");
+  const userBio = document.getElementById("user-bio");
+  const userLocation = document.getElementById("user-location");
+  const userTwitter = document.getElementById("user-twitter");
+
+  userName.textContent = userData.name || "No name available";
+  userBio.textContent = userData.bio || "No bio available";
+  userLocation.textContent = `Location: ${userData.location || "Not specified"}`;
+  userTwitter.innerHTML = userData.twitter_username
+    ? `Twitter: <a href="https://twitter.com/${userData.twitter_username}" target="_blank">@${userData.twitter_username}</a>`
+    : "Twitter: Not specified";
 };
 
-// Create Repository
-const createRepoHTML = (repo) => {
-  const topics = repo.topics
-    ? `<div class="repo-topics">${repo.topics
-        .map((topic) => `<div class="repo-topic">${topic}</div>`)
-        .join("")}</div>`
-    : "";
-  return `
-          <div class="col-md-6 mb-4">
-              <div class="repo-card p-3 border rounded">
-                  <h2 class="h6 repo-title"><a href="${repo.html_url}" target="_blank"> ${repo.name}</a></h2>
-                  <p class="mb-2">${repo.description}</p>
-                  ${topics}
-              </div>
-          </div>
-      `;
+const createRepoHTML = (reposData) => {
+  const repoListContainer = document.getElementById("repo-list-container");
+
+  reposData.forEach((repo) => {
+    const repoContainer = document.createElement("div");
+    repoContainer.classList.add("repo-container");
+
+    const repoCard = document.createElement("div");
+    repoCard.classList.add("repo-card");
+
+    const repoTitle = document.createElement("h2");
+    repoTitle.classList.add("repo-title");
+    const repoTitleLink = document.createElement("a");
+    repoTitleLink.href = repo.html_url;
+    repoTitleLink.target = "_blank";
+    repoTitleLink.textContent = repo.name;
+    repoTitle.appendChild(repoTitleLink);
+
+    const description = document.createElement("p");
+    description.textContent = repo.description || "No description available";
+
+    const topicsListContainer = document.createElement("div");
+    topicsListContainer.classList.add("repo-topics");
+
+    if (repo.topics && repo.topics.length > 0) {
+      repo.topics.forEach((topic) => {
+        const topicElement = document.createElement("div");
+        topicElement.classList.add("repo-topic");
+        topicElement.textContent = topic;
+        topicsListContainer.appendChild(topicElement);
+      });
+    }
+
+    repoCard.appendChild(repoTitle);
+    repoCard.appendChild(description);
+    repoCard.appendChild(topicsListContainer);
+
+    repoContainer.appendChild(repoCard);
+    repoListContainer.appendChild(repoContainer);
+  });
 };
 
-// Get Data of Specific User
 const getUserData = async () => {
   const usernameInput = document.getElementById("usernameInput");
   const username = usernameInput.value;
@@ -52,29 +80,38 @@ const getUserData = async () => {
   }
 
   try {
-    const response = await fetch(APIURL + username);
-    const userData = await response.json();
-
-    document.getElementById("user-info-container").innerHTML =
-      createUserInfoHTML(userData);
-
+    const userData = await fetchData(`${API_BASE_URL}/users/${username}`);
+    createUserInfoHTML(userData);
     getRepositories(username);
   } catch (error) {
-    console.error("Error fetching user data:", error);
-    alert("Error fetching user data. Please check the username and try again.");
+    alert(error.message);
   }
 };
 
-const getRepositories = async (username) => {
+const getRepositories = async (username, page = 1) => {
   try {
-    const response = await fetch(`${APIURL}${username}/repos`);
-    const reposData = await response.json();
+    const perPage = 6; // Number of repositories per page
+    const reposData = await fetchData(`${API_BASE_URL}/users/${username}/repos?page=${page}&per_page=${perPage}`);
+    console.log(reposData);
 
-    document.getElementById("repo-list-container").innerHTML = reposData
-      .map(createRepoHTML)
-      .join("");
+    createRepoHTML(reposData);
   } catch (error) {
-    console.error("Error fetching repositories data:", error);
-    alert("Error fetching repositories data. Please try again.");
+    alert(error.message);
   }
 };
+
+// Add pagination functionality
+const loadPage = (page) => {
+  const usernameInput = document.getElementById("usernameInput");
+  const username = usernameInput.value;
+
+  if (username.trim() === "") {
+    alert("Please enter a GitHub username.");
+    return;
+  }
+
+  getRepositories(username, page);
+};
+
+// Initial load with page 1
+loadPage(1);
