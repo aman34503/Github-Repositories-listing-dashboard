@@ -1,38 +1,33 @@
-# GitHub User Info Fetcher
+# GitHub User Details
 
-Dashboard that displays user details and repositories from GitHub using the GitHub API.
+GitHub User Details is a web application that allows you to enter a GitHub username and view information about the user, including their profile details and a list of public repositories. The application supports pagination for the repositories and includes a search functionality to filter repositories based on keywords.
+
+## Features
+
+- **User Details:** View basic details about a GitHub user, including their name, bio, location, and Twitter handle (if available).
+- **Repositories:** Browse a list of public repositories for the entered GitHub username with pagination support.
+- **Dark Theme:** Toggle between light and dark themes for better readability.
+- **Search Functionality:** Search and filter repositories based on keywords.
 
 ## Usage
 
-1. Clone the repository:
+1. Open `index.html` in a web browser.
+2. Enter a GitHub username in the input field.
+3. Click on the "Get User Data" button to retrieve and display user details and repositories.
+4. Use pagination buttons to navigate through the list of repositories.
+5. Use the search bar to filter repositories based on keywords.
 
-   ```bash
-   git clone https://github.com/yourusername/github-user-info-fetcher.git
-Open the index.html file in your browser.
+## Technologies Used
 
-## Features
-Fetches user details including profile photo, name, bio, Twitter link, location, and GitHub link.
-Fetches and displays a list of user repositories with links.
+- HTML
+- CSS (Bootstrap for styling)
+- JavaScript
 
-## How to Use
-Open index.html in a web browser.
+## How to Run Locally
 
-# Customize the following variables in the script:
+1. Clone this repository:
 
-username: Your GitHub username.
-token: Your GitHub Personal Access Token.
-Save the changes and refresh the page.
+```bash
+git clone https://github.com/your-username/github-user-details.git
 
-# Dependencies
-This script utilizes the GitHub API to fetch user details and repositories.
-
-# API Usage
-GitHub REST API
-
-# License
-This project is licensed under the MIT License.
-
-# Acknowledgments
-This script is based on the GitHub API and uses asynchronous JavaScript (Async/Await).
-
-Feel free to contribute, report issues, or suggest improvements.
+1. Run index.html in local server
